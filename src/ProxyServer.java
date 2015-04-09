@@ -113,26 +113,15 @@ public class ProxyServer implements Runnable {
             out = new PrintWriter(this.clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
 
-
-            // Respond to client input until they send "bye\n".
-            while ((input = in.readLine()) != null) {
-                System.out.println(in.readLine());
-//                if (input.toLowerCase().equals("bye")) {
-//                    break;
-//                }
-//
-//                try {
-//                    if(Integer.parseInt(input) % 2 == 0) {
-//                        out.println("even");
-//                    } else {
-//                        out.println("odd");
-//                    }
-//                } catch (NumberFormatException e) {
-//                    out.println(input + " is not an integer");
-//                }
-            }
-//
-//            out.println("bye");
+            // Log the client request.
+            input = in.readLine();
+            System.out.println(input);
+            // Respond with a static 404 page
+            out.println("HTTP/1.1 404 Not Found");
+            out.println("Content-Type: text/html");
+            out.println("");
+            out.println("<h1>Foobarbazquox</h1>\n");
+            this.clientSocket.close();
         } catch(java.io.IOException e) {
             // TODO: Write to log file.
         }
