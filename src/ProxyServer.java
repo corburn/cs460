@@ -29,6 +29,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,11 +42,13 @@ import java.util.List;
 public class ProxyServer implements Runnable {
 
     Socket clientSocket;
+    int rnd;
 
     /**
      * @param clientSocket
      */
     public ProxyServer(java.net.Socket clientSocket) {
+        this.rnd = new java.util.Random().nextInt();
         this.clientSocket = clientSocket;
     }
 
@@ -113,17 +117,52 @@ public class ProxyServer implements Runnable {
             out = new PrintWriter(this.clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
 
-            // Log the client request.
-            input = in.readLine();
-            System.out.println(input);
-            // Respond with a static 404 page
-            out.println("HTTP/1.1 404 Not Found");
-            out.println("Content-Type: text/html");
-            out.println("");
-            out.println("<h1>Foobarbazquox</h1>\n");
+            String requestLine = in.readLine();
+            String[] parts = requestLine.split(" ");
+
+            System.out.println("request-line: " + requestLine);
+
+            if(!parts[1].toLowerCase().startsWith("http")) {
+                System.out.println("prefixing http://");
+                parts[1] = "http://" + parts[1];
+            }
+
+            URI uri = new URI(parts[1]);
+
+            System.out.println("Host: " + uri.getHost() + " Port: " + uri.getPort());
+
+            int port = uri.getPort();
+            if(port == -1) {
+                System.out.println("assign default port 80");
+                port = 80;
+            }
+
+            Socket socket = new Socket(uri.getHost(), port);
+            PrintWriter out2 = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in2 = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            System.out.println("Forwarding request");
+            System.out.println(requestLine);
+            out2.println(requestLine);
+            while((input = in.readLine()) != null) {
+                System.out.println(input);
+                out2.println(input);
+                if(input.equals("")) {
+                    break;
+                }
+            }
+            
+            System.out.println("Forwarding response");
+            while((input = in2.readLine()) != null) {
+                System.out.println(input);
+                out.println(input);
+            }
+
             this.clientSocket.close();
         } catch(java.io.IOException e) {
             // TODO: Write to log file.
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
         }
     }
 }
