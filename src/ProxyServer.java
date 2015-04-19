@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * ProxyServer implements the CS460 Project 1 ProxyServer protocol.
  */
-public class ProxyServer implements Runnable {
+public class ProxyServer {
 
     Socket clientSocket;
     int rnd;
@@ -65,28 +65,28 @@ public class ProxyServer implements Runnable {
      * @param args
      */
     public static void main(String[] args) {
-        List<String> arguments = new ArrayList<String>(Arrays.asList(args));
-        boolean isThreaded = false;
+//        List<String> arguments = new ArrayList<String>(Arrays.asList(args));
+        boolean isThreaded = true;
         int portNumber = 8080;
 
 
-        // Parse optional argument.
-        if(arguments.contains("--threaded")) {
-            isThreaded = true;
-            arguments.remove("--threaded");
-        }
-
-        // After removing the optional argument, only the required argument should remain.
-        if (arguments.size() != 1) {
-            printUsage();
-        }
-
-        // Parse required argument.
-        try {
-            portNumber = Integer.parseInt(arguments.get(0));
-        } catch(NumberFormatException e) {
-            printUsage();
-        }
+//        // Parse optional argument.
+//        if(arguments.contains("--threaded")) {
+//            isThreaded = true;
+//            arguments.remove("--threaded");
+//        }
+//
+//        // After removing the optional argument, only the required argument should remain.
+//        if (arguments.size() != 1) {
+//            printUsage();
+//        }
+//
+//        // Parse required argument.
+//        try {
+//            portNumber = Integer.parseInt(arguments.get(0));
+//        } catch(NumberFormatException e) {
+//            printUsage();
+//        }
 
         // Listen for client connections.
         try {
@@ -95,72 +95,13 @@ public class ProxyServer implements Runnable {
                 // Each connection will be handled in a separate thread if the --threaded flag was used,
                 // otherwise, the server will be single-threaded.
                 if(isThreaded) {
-                    (new Thread(new ProxyServer(serverSocket.accept()))).start();
+                    (new Thread(new ProxyServerThread(serverSocket.accept()))).start();
                 } else {
-                    new ProxyServer(serverSocket.accept()).run();
+                    new ProxyServerThread(serverSocket.accept()).run();
                 }
             }
         } catch (java.io.IOException e) {
-            // TODO: Write to log file.
-        }
-    }
-
-    /**
-     * run handles a single client connection.
-     */
-    public void run() {
-        PrintWriter out;
-        BufferedReader in;
-        String input;
-
-        try {
-            out = new PrintWriter(this.clientSocket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-
-            String requestLine = in.readLine();
-            String[] parts = requestLine.split(" ");
-
-            System.out.println("request-line: " + requestLine);
-
-            if(!parts[1].toLowerCase().startsWith("http")) {
-                System.out.println("prefixing http://");
-                parts[1] = "http://" + parts[1];
-            }
-
-            URI uri = new URI(parts[1]);
-
-            System.out.println("Host: " + uri.getHost() + " Port: " + uri.getPort());
-
-            int port = uri.getPort();
-            if(port == -1) {
-                System.out.println("assign default port 80");
-                port = 80;
-            }
-
-            Socket socket = new Socket(uri.getHost(), port);
-            PrintWriter out2 = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in2 = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            System.out.println("Forwarding request");
-            System.out.println(requestLine);
-            out2.println(requestLine);
-            while((input = in.readLine()) != null) {
-                System.out.println(input);
-                out2.println(input);
-                if(input.equals("")) {
-                    break;
-                }
-            }
-            
-            System.out.println("Forwarding response");
-            while((input = in2.readLine()) != null) {
-                System.out.println(input);
-                out.println(input);
-            }
-
-            this.clientSocket.close();
-        } catch(java.io.IOException e) {
-            // TODO: Write to log file.
+            e.printStackTrace();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
