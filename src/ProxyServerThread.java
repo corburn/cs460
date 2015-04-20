@@ -24,8 +24,8 @@ import java.net.*;
 public class ProxyServerThread implements Runnable {
 
     Socket clientSocket;
-    HttpRequest req;
-    HttpResponse res;
+   // HttpRequest req;
+   // HttpResponse res;
     PrintWriter out;
 
     public ProxyServerThread(Socket clientSocket) throws IOException, URISyntaxException {
@@ -62,6 +62,7 @@ public class ProxyServerThread implements Runnable {
                 this.clientSocket.close();
                 return;
             }
+            
             if(!reqLine[0].toUpperCase().equals("GET")) {
                 System.err.println("Ignoring non-GET request method: " + requestLine);
                 sendBadRequest(clientOut);
@@ -73,6 +74,7 @@ public class ProxyServerThread implements Runnable {
             if(port == -1) {
                 port = 80;
             }
+
             System.out.println("Connecting to " + uri.getHost() + ":" + port);
             Socket serverSocket = new Socket(uri.getHost(), port);
             PrintWriter serverOut = new PrintWriter(serverSocket.getOutputStream(), true);
@@ -93,11 +95,22 @@ public class ProxyServerThread implements Runnable {
             }
             serverOut.println("\n");
 
+            HttpResponse HPR = new HttpResponse(serverSocket, clientOut);
+            /**
             System.out.println("Reading server response");
             DataInputStream serverIn = new DataInputStream(serverSocket.getInputStream());
             DataOutputStream clientOutd = new DataOutputStream(clientOut);
             String input;
             while((input = serverIn.readLine()) != null) {
+            	
+            	//Obtain Content Length
+                String ContentLength;
+            		if(input.toLowerCase().startsWith("content-length:"))
+            		{
+            			String[] conleng = input.split(" ");
+            			ContentLength = conleng[1];
+            			System.out.println(ContentLength);
+            		}
                 if(input.equals("")) {
                     clientOutd.write("Connection: close\r\n\r\n".getBytes());
                     break;
@@ -109,6 +122,7 @@ public class ProxyServerThread implements Runnable {
             while((bytesRead = serverIn.read(buf)) != -1) {
                 clientOutd.write(buf, 0, bytesRead);
             }
+            **/
             clientSocket.close();
             System.out.println("DONE " + requestLine);
 
