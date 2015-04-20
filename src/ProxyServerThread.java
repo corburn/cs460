@@ -42,8 +42,25 @@ public class ProxyServerThread implements Runnable {
     /**
      * run handles a single client connection.
      */
+   
     public void run() {
-        BufferedReader clientIn = null;
+    	
+    	HttpRequest HTPR;
+    	Socket serverSocket = null;
+		try {
+			HTPR = new HttpRequest(clientSocket);
+			serverSocket = HTPR.getServerSocket();
+			OutputStream clientOut = this.clientSocket.getOutputStream();
+            HttpResponse HPR = new HttpResponse(serverSocket, clientOut);
+            clientSocket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        /**BufferedReader clientIn = null;
         OutputStream clientOut = null;
         try {
             clientIn = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
@@ -93,9 +110,7 @@ public class ProxyServerThread implements Runnable {
                     break;
                 }
             }
-            serverOut.println("\n");
-
-            HttpResponse HPR = new HttpResponse(serverSocket, clientOut);
+            serverOut.println("\n"); **/
             /**
             System.out.println("Reading server response");
             DataInputStream serverIn = new DataInputStream(serverSocket.getInputStream());
@@ -123,15 +138,14 @@ public class ProxyServerThread implements Runnable {
                 clientOutd.write(buf, 0, bytesRead);
             }
             **/
-            clientSocket.close();
-            System.out.println("DONE " + requestLine);
+            //System.out.println("DONE " + requestLine);
 
-        } catch (IOException e) {
+        /*} catch (IOException e) {
 //            e.printStackTrace();
             System.err.println("clientSocket.getInputStream IOException");
         } catch (URISyntaxException e) {
 //            e.printStackTrace();
             System.err.println("clientSocket requestLine URISyntaxException");
-        }
+        }*/
     }
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The server should be started before the client. The server has one required and one optional commandline argument.
  * The port number argument is required and indicates on which port the server should listen for connections.
  * The --threaded flag is optional. If present, the server will create a separate thread for each client connection.

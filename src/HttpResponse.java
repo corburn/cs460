@@ -11,7 +11,6 @@ public class HttpResponse {
 
     public HttpResponse(Socket socket, OutputStream out ) throws IOException {
         serverIn = new DataInputStream(socket.getInputStream());
-        serverOut = new DataOutputStream(socket.getOutputStream());
         clientOutd = new DataOutputStream(out);
   
     System.out.println("Reading server response");
