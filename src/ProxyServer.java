@@ -24,16 +24,9 @@
  * Finally, if the client enters "bye", the server will respond by also saying "bye" and then shutdown the connection,
  * upon which the client needs to shutdown too.
  */
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -68,25 +61,6 @@ public class ProxyServer {
 //        List<String> arguments = new ArrayList<String>(Arrays.asList(args));
         boolean isThreaded = true;
         int portNumber = 8080;
-
-
-//        // Parse optional argument.
-//        if(arguments.contains("--threaded")) {
-//            isThreaded = true;
-//            arguments.remove("--threaded");
-//        }
-//
-//        // After removing the optional argument, only the required argument should remain.
-//        if (arguments.size() != 1) {
-//            printUsage();
-//        }
-//
-//        // Parse required argument.
-//        try {
-//            portNumber = Integer.parseInt(arguments.get(0));
-//        } catch(NumberFormatException e) {
-//            printUsage();
-//        }
 
         // Listen for client connections.
         try {

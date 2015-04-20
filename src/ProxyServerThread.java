@@ -30,20 +30,6 @@ public class ProxyServerThread implements Runnable {
 
     public ProxyServerThread(Socket clientSocket) throws IOException, URISyntaxException {
         this.clientSocket = clientSocket;
-//        DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-//        String requestLine = in.readLine();
-
-//        this.out = new PrintWriter(clientSocket.getOutputStream(), true);
-//        try {
-//            this.req = new HttpRequest(clientSocket.getInputStream());
-//        } catch(IOException e) {
-//            System.err.println("IOException: " + e.getMessage());
-//            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-//            out.println("HTTP/1.1 400 Bad Request");
-//            out.println("Connection: close");
-//            out.println("");
-//            clientSocket.close();
-//        }
     }
 
     public void sendBadRequest(OutputStream stream) {
@@ -88,8 +74,7 @@ public class ProxyServerThread implements Runnable {
                 port = 80;
             }
             System.out.println("Connecting to " + uri.getHost() + ":" + port);
-//            Socket serverSocket = new Socket(uri.getHost(), port);
-            Socket serverSocket = new Socket("206.191.14.108", port);
+            Socket serverSocket = new Socket(uri.getHost(), port);
             PrintWriter serverOut = new PrintWriter(serverSocket.getOutputStream(), true);
             String modRequestLine = reqLine[0] + " " + reqLine[1] + " " + "HTTP/1.0";
             System.out.println("Forwarding downgraded client request line: " + modRequestLine);
@@ -106,62 +91,24 @@ public class ProxyServerThread implements Runnable {
                     break;
                 }
             }
-//            serverOut.println("\n");
-//            System.out.println("\tConnection: close\n\n");
-//            serverOut.println("Connection: close");
             serverOut.println("\n");
 
             System.out.println("Reading server response");
-            BufferedReader serverIn = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
-            while((header = serverIn.readLine()) != null) {
-                if(header.equals("")) {
-                    System.out.println("Breaking on empty server header");
-                    break;
-                }
-                System.out.println("\t" + header);
+            DataInputStream serverIn = new DataInputStream(serverSocket.getInputStream());
+            DataOutputStream clientOutd = new DataOutputStream(clientOut);
+            byte[] buf = new byte[8192];
+            int bytesRead = 0;
+            while((bytesRead = serverIn.read(buf)) != -1) {
+                clientOutd.write(buf, 0, bytesRead);
             }
             System.out.println("DONE " + requestLine);
 
         } catch (IOException e) {
 //            e.printStackTrace();
             System.err.println("clientSocket.getInputStream IOException");
-            return;
         } catch (URISyntaxException e) {
 //            e.printStackTrace();
             System.err.println("clientSocket requestLine URISyntaxException");
         }
-
-
-//        URI uri = req.getUri();
-//        int port = uri.getPort();
-//        if(port == -1) {
-//            port = 80;
-//        }
-//
-//        System.out.println("Opening socket with " + uri.getHost() + ":" + port);
-//        try {
-//            Socket serverSocket = new Socket(uri.getHost(), port);
-//        } catch(UnknownHostException e) {
-////            e.printStackTrace();
-//            System.err.println("UnknownHostException: " + req.getRequestLine());
-//            out.println("HTTP/1.1 400 Bad Request");
-//            out.println("Connection: close");
-//            out.println("");
-////            this.clientSocket.close();
-//            return;
-//        } catch(ConnectException e) {
-//            System.err.println("ConnectionException: " + req.getRequestLine());
-//            out.println("HTTP/1.1 400 Bad Request");
-//            out.println("Connection: close");
-//            out.println("");
-////            clientSocket.close();
-//            return;
-//        } catch (IOException e) {
-//            System.err.println("IOException: " + req.getRequestLine());
-//            out.println("HTTP/1.1 400 Bad Request");
-//            out.println("Connection: close");
-//            out.println("");
-//            return;
-//        }
     }
 }
