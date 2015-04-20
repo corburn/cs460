@@ -96,11 +96,20 @@ public class ProxyServerThread implements Runnable {
             System.out.println("Reading server response");
             DataInputStream serverIn = new DataInputStream(serverSocket.getInputStream());
             DataOutputStream clientOutd = new DataOutputStream(clientOut);
+            String input;
+            while((input = serverIn.readLine()) != null) {
+                if(input.equals("")) {
+                    clientOutd.write("Connection: close\r\n\r\n".getBytes());
+                    break;
+                }
+                clientOutd.write((input + "\r\n").getBytes());
+            }
             byte[] buf = new byte[8192];
             int bytesRead = 0;
             while((bytesRead = serverIn.read(buf)) != -1) {
                 clientOutd.write(buf, 0, bytesRead);
             }
+            clientSocket.close();
             System.out.println("DONE " + requestLine);
 
         } catch (IOException e) {
