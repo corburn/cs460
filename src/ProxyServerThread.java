@@ -39,7 +39,9 @@ public class ProxyServerThread implements Runnable {
         response.forward(request);
         return response.getBytes();
     }
-//
+
+    // sendResource forwards the cached resource if it exists, otherwise it fetches the resource
+    // before forwarding it to the client.
     private void sendResource(ProxyCache cache, HttpRequest request) throws IOException {
         String host = request.getHost();
         String path = request.getPath();
@@ -50,10 +52,10 @@ public class ProxyServerThread implements Runnable {
         } catch (NoSuchFileException e) {
             System.err.println("Cache miss: " + host + path);
             content = this.fetchResource(host, request.getPort(), request.getBytes());
-            cache.setResource(host, path, content);
+            cache.setResource(host, path, "<h1>Hello World</h1>".getBytes());
         }
 
-        request.send("Content-Type: text/html", "<h1>Hello World</h1>".getBytes());
+        request.send("Content-Type: text/html", content);
     }
 
     /**
