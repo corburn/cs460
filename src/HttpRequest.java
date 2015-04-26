@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 public class HttpRequest {
     BufferedReader in;
@@ -43,19 +44,33 @@ public class HttpRequest {
     }
 
     public int getPort() {
-        return this.requestLine.getUri().getPort();
+        // Default to port 80 webtraffic if unspecified
+        int port = this.requestLine.getUri().getPort();
+        return port == -1 ? 80 : port;
     }
 
     public String getPath() {
         return this.requestLine.getUri().getPath();
     }
 
-//    public byte[] getBytes() {
-//
-//    }
+    // getBytes returns the request Header as a array of bytes.
+    public byte[] getBytes() throws IOException {
+        StringBuilder headers = new StringBuilder("");
+        String input = "";
+        while((input = this.in.readLine()) != null) {
+            if(!input.equals("")) {
+                headers.append(input + "\r\n");
+            } else {
+                headers.append("\r\n");
+                break;
+            }
+        }
+        return headers.toString().getBytes();
+    }
 
-    public void send(byte[] header, byte[] resource) throws IOException {
-        this.out.write(header);
+    public void send(String contentType, byte[] resource) throws IOException {
+        this.out.writeBytes("HTTP/1.0 200 OK" +
+                contentType.trim() + "\r\n\r\n");
         this.out.write(resource);
     }
 
@@ -73,7 +88,6 @@ public class HttpRequest {
         String requestLine;
 
         public RequestLine(String line) throws URISyntaxException, IOException {
-            System.out.println("RequestLine(" + line + ")");
 
             if(line == null) {
                 throw new IOException("The client request line is null");

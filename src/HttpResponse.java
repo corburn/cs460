@@ -3,7 +3,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class HttpResponse {
+public class HttpResponse implements Response {
     DataInputStream in;
     DataOutputStream out;
 
@@ -14,6 +14,10 @@ public class HttpResponse {
 
     public void forward(byte[] request) throws IOException {
         this.out.write(request);
+    }
+
+    public String getHeader() {
+        return "";
     }
 
     public byte[] getBytes() {

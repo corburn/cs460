@@ -2,28 +2,31 @@ import java.io.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 
 public class ProxyCache {
 
+//    HashMap<String, String> headers;
+
     public ProxyCache() {
-
+//        this.headers = new HashMap<>();
     }
-
-//    public String getHeaders(String server, String resourcePath) {
-//
-//    }
 
     // Used to see if the requested resource is already in the cache.
     // If so, the resource is returned as an array of bytes.
     // Otherwise the byte array returned is empty.
     public byte[] getResource(String server, String resourcePath) throws IOException {
-        Path path = FileSystems.getDefault().getPath(server + "/" + resourcePath);
+        String filepath = "cache" + File.separator + server + resourcePath;
+        System.out.println("Query cache for " + filepath);
+        Path path = FileSystems.getDefault().getPath(server + resourcePath);
         return Files.readAllBytes(path);
     }
 
     // Used to save a resource
     public void setResource(String server, String resourcePath, byte[] resource) throws IOException {
-        File file = new File(server + "/" + resourcePath);
+        String filepath = "cache" + File.separator + server + resourcePath;
+        System.out.println("Caching " + filepath);
+        File file = new File(filepath);
         file.getParentFile().mkdirs();
         FileOutputStream stream = new FileOutputStream(file, true);
         stream.write(resource);

@@ -18,6 +18,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.NoSuchFileException;
 
 /**
  * ProxyServerThread implements the CS460 Project 1 ProxyServerThread protocol.
@@ -42,18 +43,17 @@ public class ProxyServerThread implements Runnable {
     private void sendResource(ProxyCache cache, HttpRequest request) throws IOException {
         String host = request.getHost();
         String path = request.getPath();
-        byte[] resource;
+        byte[] content;
         try {
-            System.out.println("Cache hit: " + host + "/" + path);
-            resource = cache.getResource(host, path);
-        } catch (FileNotFoundException e) {
-            System.out.println("Cache miss: " + host + "/" + path);
-//            resource = this.fetchResource(host, request.getPort(), request.getBytes());
-//            cache.setResource(host, path, resource);
+            content = cache.getResource(host, path);
+            System.out.println("Cache hit: " + host + path);
+        } catch (NoSuchFileException e) {
+            System.err.println("Cache miss: " + host + path);
+            content = this.fetchResource(host, request.getPort(), request.getBytes());
+            cache.setResource(host, path, content);
         }
 
-//        request.send(cache.getHeader(), resource);
-//        request.send("TODO", resource);
+        request.send("Content-Type: text/html", "<h1>Hello World</h1>".getBytes());
     }
 
     /**
@@ -66,13 +66,14 @@ public class ProxyServerThread implements Runnable {
         try {
             request = new HttpRequest(this.clientSocket);
         } catch (URISyntaxException | IOException e) {
-            e.printStackTrace();
+            System.err.println("Ignoring IOException");
+//            e.printStackTrace();
             return;
         }
 
         // Ignore non GET requests.
         if(!request.getMethod().toUpperCase().equals("GET")) {
-            System.err.println("Ignoring non-GET request: " + request.getMethod() + " " + request.getHost() + "/" + request.getPath() + ":" + request.getPort())
+//            System.err.println("Ignore non-GET request: " + request.getMethod() + " " + request.getHost() + "/" + request.getPath() + ":" + request.getPort());
             request.sendUnsupportedMethod();
             return;
         }
