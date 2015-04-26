@@ -24,6 +24,7 @@
  * Finally, if the client enters "bye", the server will respond by also saying "bye" and then shutdown the connection,
  * upon which the client needs to shutdown too.
  */
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -34,21 +35,10 @@ import java.net.URISyntaxException;
  */
 public class ProxyServer {
 
-    Socket clientSocket;
-    int rnd;
-
-    /**
-     * @param clientSocket
-     */
-    public ProxyServer(java.net.Socket clientSocket) {
-        this.rnd = new java.util.Random().nextInt();
-        this.clientSocket = clientSocket;
-    }
-
     /**
      * printUsage prints a usage message and exits.
      */
-    public static void printUsage() {
+    private static void printUsage() {
         System.err.println("Usage: java ProxyServer [--threaded] <port number>");
         System.exit(1);
     }
@@ -59,25 +49,29 @@ public class ProxyServer {
      */
     public static void main(String[] args) {
 //        List<String> arguments = new ArrayList<String>(Arrays.asList(args));
-        boolean isThreaded = true;
+//        boolean isThreaded = true;
         int portNumber = 8080;
 
         // Listen for client connections.
+        ServerSocket serverSocket = null;
         try {
-            ServerSocket serverSocket = new ServerSocket(portNumber);
-            while(true) {
-                // Each connection will be handled in a separate thread if the --threaded flag was used,
-                // otherwise, the server will be single-threaded.
-                if(isThreaded) {
-                    (new Thread(new ProxyServerThread(serverSocket.accept()))).start();
-                } else {
-                    new ProxyServerThread(serverSocket.accept()).run();
-                }
+            serverSocket = new ServerSocket(portNumber);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        ProxyCache cache = new ProxyCache();
+
+        while(true) {
+            try {
+                ProxyServerThread thread = new ProxyServerThread(cache, serverSocket.accept());
+                new Thread(thread).start();
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
         }
     }
 }
