@@ -48,9 +48,9 @@ public class ProxyServerThread implements Runnable {
             // Get cached resource.
             headers = cache.getHeaders(host, path);
             body = cache.getResource(host, path);
-//            if(headers == null || body == null) {
-//                throw new NullPointerException("Headers: " + headers.toString() + " body: " + body.toString());
-//            }
+            if(headers == null || body == null) {
+                throw new NullPointerException("Headers: " + headers.toString() + " body: " + body.toString());
+            }
             System.out.println("Cache hit: " + host + path);
         } catch (NoSuchFileException | NullPointerException e) {
             // A cached copy of the resource does not exist.
