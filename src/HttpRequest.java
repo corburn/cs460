@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -55,23 +52,44 @@ public class HttpRequest {
 
     // getBytes returns the request Header as a array of bytes.
     public byte[] getBytes() throws IOException {
-        StringBuilder headers = new StringBuilder("");
+        StringBuilder headers = new StringBuilder();
+
+        headers.append(getFilteredRequestLine() + "\r\n");
+
         String input = "";
         while((input = this.in.readLine()) != null) {
             if(!input.equals("")) {
                 headers.append(input + "\r\n");
             } else {
+                // Blank line marks the end of the header section.
                 headers.append("\r\n");
                 break;
             }
         }
+        System.out.println(headers);
         return headers.toString().getBytes();
     }
 
-    public void send(String contentType, byte[] resource) throws IOException {
-        this.out.writeBytes("HTTP/1.0 200 OK" +
-                contentType.trim() + "\r\n\r\n");
+    public void send(ArrayList<String> headers, byte[] resource) throws IOException {
+        ByteArrayOutputStream msg = new ByteArrayOutputStream();
+        StringBuilder str = new StringBuilder();
+
+        System.out.println("HttpRequest.send " + headers);
+
+        for(String header : headers) {
+            System.out.println("SEND" + header);
+            str.append(header + "\r\n");
+        }
+
+        str.append("Content-Length: " + resource.length + "\r\n" +
+                "Connection: close\r\n");
+        this.out.writeBytes(str.toString());
+        this.out.writeBytes("\r\n");
         this.out.write(resource);
+    }
+
+    private String getFilteredRequestLine() {
+        return getMethod() + " " + this.requestLine.getUri().toString() + " HTTP/1.0";
     }
 
     /**

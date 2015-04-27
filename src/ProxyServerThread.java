@@ -19,6 +19,7 @@
 import java.io.*;
 import java.net.*;
 import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
 
 /**
  * ProxyServerThread implements the CS460 Project 1 ProxyServerThread protocol.
@@ -33,29 +34,40 @@ public class ProxyServerThread implements Runnable {
         this.clientSocket = clientSocket;
     }
 
-    private byte[] fetchResource(String host, int port, byte[] request) throws IOException {
-        Socket serverSocket = new Socket(host, port);
-        HttpResponse response = new HttpResponse(serverSocket);
-        response.forward(request);
-        return response.getBytes();
-    }
-
-    // sendResource forwards the cached resource if it exists, otherwise it fetches the resource
+    // sendResource forwards the cached forward if it exists, otherwise it fetches the forward
     // before forwarding it to the client.
     private void sendResource(ProxyCache cache, HttpRequest request) throws IOException {
         String host = request.getHost();
+        int port = request.getPort();
         String path = request.getPath();
-        byte[] content;
+
+        byte[] body;
+        ArrayList<String> headers;
+
         try {
-            content = cache.getResource(host, path);
+            // Get cached resource.
+            headers = cache.getHeaders(host, path);
+            body = cache.getResource(host, path);
+//            if(headers == null || body == null) {
+//                throw new NullPointerException("Headers: " + headers.toString() + " body: " + body.toString());
+//            }
             System.out.println("Cache hit: " + host + path);
-        } catch (NoSuchFileException e) {
+        } catch (NoSuchFileException | NullPointerException e) {
+            // A cached copy of the resource does not exist.
+            // fetch it from the remote server.
             System.err.println("Cache miss: " + host + path);
-            content = this.fetchResource(host, request.getPort(), request.getBytes());
-            cache.setResource(host, path, "<h1>Hello World</h1>".getBytes());
+            Socket serverSocket = new Socket(host, port);
+            HttpResponse response = new HttpResponse(serverSocket, request.getBytes());
+
+            headers = cache.setHeaders(host, path, response.getHeaders());
+            body = cache.setResource(host, path, response.getBody());
+
+            System.out.println("CACHE MISS: " + headers + " " + body);
         }
 
-        request.send("Content-Type: text/html", content);
+        request.send(headers, body);
+
+        this.clientSocket.close();
     }
 
     /**
@@ -80,73 +92,13 @@ public class ProxyServerThread implements Runnable {
             return;
         }
 
-        // Return the cached resource, fetching it from the remote server if necessary.
+        // Return the cached forward, fetching it from the remote server if necessary.
         try {
             sendResource(this.cache, request);
         } catch (IOException e) {
             e.printStackTrace();
             request.sendBadRequest();
         }
-
-//        BufferedReader clientIn = null;
-//        OutputStream clientOut = null;
-//        try {
-//            clientIn = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-//            clientOut = this.clientSocket.getOutputStream();
-//            String requestLine = clientIn.readLine();
-//            if(requestLine == null) {
-//                System.err.println("ClientSocket requestLine null");
-//                sendBadRequest(clientOut);
-//                this.clientSocket.close();
-//                return;
-//            }
-//            String[] reqLine = requestLine.split(" ");
-//            if(reqLine.length != 3) {
-//                System.err.println("Expected clientSocket requestLine to have 3 parts: " + requestLine);
-//                sendBadRequest(clientOut);
-//                this.clientSocket.close();
-//                return;
-//            }
-//            if(!reqLine[0].toUpperCase().equals("GET")) {
-//                System.err.println("Ignoring non-GET request method: " + requestLine);
-//                sendBadRequest(clientOut);
-//                this.clientSocket.close();
-//                return;
-//            }
-//            URI uri = new URI(reqLine[1]);
-//            int port = uri.getPort();
-//            if(port == -1) {
-//                port = 80;
-//            }
-//        System.out.println("Connecting to " + uri.getHost() + ":" + port);
-//        Socket serverSocket = new Socket(uri.getHost(), port);
-//        PrintWriter serverOut = new PrintWriter(serverSocket.getOutputStream(), true);
-//        String modRequestLine = reqLine[0] + " " + reqLine[1] + " " + "HTTP/1.0";
-//        System.out.println("Forwarding downgraded client request line: " + modRequestLine);
-//        serverOut.println(modRequestLine);
-
-//        System.out.println("Forwarding client headers");
-//        String header;
-//        while ((header = clientIn.readLine()) != null) {
-//            if (!header.equals("")) {
-//                System.out.println("\t" + header);
-//                serverOut.println(header);
-//            } else {
-//                System.out.println("Breaking on empty client header");
-//                break;
-//            }
-//        }
-//        serverOut.println("\n");
-//
-//        System.out.println("Reading server response");
-//        DataInputStream serverIn = new DataInputStream(serverSocket.getInputStream());
-//        DataOutputStream clientOutd = new DataOutputStream(clientOut);
-//        byte[] buf = new byte[8192];
-//        int bytesRead = 0;
-//        while ((bytesRead = serverIn.read(buf)) != -1) {
-//            clientOutd.write(buf, 0, bytesRead);
-//        }
-//        System.out.println("DONE " + requestLine);
 
     }
 }
